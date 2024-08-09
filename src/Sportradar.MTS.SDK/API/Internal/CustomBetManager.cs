@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using Microsoft.Extensions.Logging;
 using Sportradar.MTS.SDK.Common;
 using Sportradar.MTS.SDK.Common.Exceptions;
@@ -14,6 +13,7 @@ using Sportradar.MTS.SDK.Entities.Internal;
 using Sportradar.MTS.SDK.Entities.Internal.Builders;
 using Sportradar.MTS.SDK.Entities.Internal.CustomBetImpl;
 using Sportradar.MTS.SDK.Entities.Internal.Dto.CustomBet;
+using Sportradar.MTS.SDK.Entities.Utils;
 
 namespace Sportradar.MTS.SDK.API.Internal
 {
@@ -66,7 +66,7 @@ namespace Sportradar.MTS.SDK.API.Internal
         public async Task<ICalculation> CalculateProbabilityAsync(IEnumerable<ISelection> selections)
         {
             var selectionsList = selections as IReadOnlyCollection<ISelection>;
-            
+
             CheckMethodArguments(selectionsList);
 
             try

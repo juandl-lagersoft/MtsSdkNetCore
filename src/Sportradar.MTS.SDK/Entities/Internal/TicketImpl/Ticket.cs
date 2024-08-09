@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Dawn;
 using System.Linq;
-using Castle.Core.Internal;
 using Newtonsoft.Json;
 using Sportradar.MTS.SDK.Entities.Enums;
 using Sportradar.MTS.SDK.Entities.Interfaces;
+using Sportradar.MTS.SDK.Entities.Utils;
 
 namespace Sportradar.MTS.SDK.Entities.Internal.TicketImpl
 {
@@ -105,18 +105,18 @@ namespace Sportradar.MTS.SDK.Entities.Internal.TicketImpl
 
         [JsonConstructor]
         [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Allowed")]
-        private Ticket(string ticketId, 
-                       IEnumerable<IBet> bets, 
-                       IEnumerable<ISelection> selections, 
-                       ISender sender, 
-                       string reofferId, 
-                       string altStakeRefId, 
-                       bool testSource, 
-                       OddsChangeType? oddsChange, 
-                       DateTime timestamp, 
-                       string version, 
-                       string correlationId, 
-                       int? totalCombinations, 
+        private Ticket(string ticketId,
+                       IEnumerable<IBet> bets,
+                       IEnumerable<ISelection> selections,
+                       ISender sender,
+                       string reofferId,
+                       string altStakeRefId,
+                       bool testSource,
+                       OddsChangeType? oddsChange,
+                       DateTime timestamp,
+                       string version,
+                       string correlationId,
+                       int? totalCombinations,
                        DateTime? lastMatchEndTime,
                        long? payCap)
         {
@@ -152,14 +152,14 @@ namespace Sportradar.MTS.SDK.Entities.Internal.TicketImpl
         /// <param name="totalCombinations">Expected total number of generated combinations on this ticket (optional, default null). If present is used to validate against actual number of generated combinations</param>
         /// <param name="lastMatchEndTime">End time of last (non Sportradar) match on ticket.</param>
         [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Allowed")]
-        public Ticket(string ticketId, 
-                      ISender sender, 
-                      IEnumerable<IBet> bets, 
-                      string reofferId, 
+        public Ticket(string ticketId,
+                      ISender sender,
+                      IEnumerable<IBet> bets,
+                      string reofferId,
                       string altStakeRefId,
-                      bool isTestSource, 
-                      OddsChangeType? oddsChangeType, 
-                      int? totalCombinations, 
+                      bool isTestSource,
+                      OddsChangeType? oddsChangeType,
+                      int? totalCombinations,
                       DateTime? lastMatchEndTime)
         {
             ValidateConstructorParameters(ticketId, sender, bets, reofferId, altStakeRefId, totalCombinations, lastMatchEndTime);
@@ -197,12 +197,12 @@ namespace Sportradar.MTS.SDK.Entities.Internal.TicketImpl
             TotalCombinations = totalCombinations;
         }
 
-        private void ValidateConstructorParameters(string ticketId, 
-                                                   ISender sender, 
-                                                   IEnumerable<IBet> bets, 
-                                                   string reofferId, 
-                                                   string altStakeRefId, 
-                                                   int? totalCombinations, 
+        private void ValidateConstructorParameters(string ticketId,
+                                                   ISender sender,
+                                                   IEnumerable<IBet> bets,
+                                                   string reofferId,
+                                                   string altStakeRefId,
+                                                   int? totalCombinations,
                                                    DateTime? lastMatchEndTime)
         {
             Guard.Argument(ticketId, nameof(ticketId)).Require(TicketHelper.ValidateTicketId(ticketId));
