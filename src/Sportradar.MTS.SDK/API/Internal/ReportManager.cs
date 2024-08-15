@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using App.Metrics;
 using App.Metrics.Counter;
-using Castle.Core.Internal;
 using Dawn;
 using Microsoft.Extensions.Logging;
 using Sportradar.MTS.SDK.API.Internal.MtsAuth;
@@ -21,6 +20,7 @@ using Sportradar.MTS.SDK.Entities.Enums;
 using Sportradar.MTS.SDK.Entities.Interfaces;
 using Sportradar.MTS.SDK.Entities.Internal;
 using Sportradar.MTS.SDK.Entities.Internal.REST.ReportApiImpl;
+using Sportradar.MTS.SDK.Entities.Utils;
 using TinyCsvParser;
 using TinyCsvParser.Mapping;
 using TinyCsvParser.TypeConverter;
@@ -78,7 +78,7 @@ namespace Sportradar.MTS.SDK.API.Internal
             Guard.Argument(ccfChangeHistoryFetcher, nameof(ccfChangeHistoryFetcher)).NotNull();
             Guard.Argument(ccfChangeHistoryUri, nameof(ccfChangeHistoryUri)).NotNull().NotEmpty();
             Guard.Argument(config, nameof(config)).NotNull();
-            
+
             _ccfChangeHistoryFetcher = ccfChangeHistoryFetcher;
             _ccfChangeHistoryUri = ccfChangeHistoryUri;
             _mtsAuthService = mtsAuthService;
@@ -87,14 +87,14 @@ namespace Sportradar.MTS.SDK.API.Internal
         }
 
         [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Needs more arguments")]
-        public async Task GetHistoryCcfChangeCsvExportAsync(Stream outputStream, 
-                                                            DateTime startDate, 
-                                                            DateTime endDate, 
+        public async Task GetHistoryCcfChangeCsvExportAsync(Stream outputStream,
+                                                            DateTime startDate,
+                                                            DateTime endDate,
                                                             int? bookmakerId = null,
-                                                            List<int> subBookmakerIds = null, 
-                                                            string sourceId = null, 
-                                                            SourceType sourceType = SourceType.Customer, 
-                                                            string username = null, 
+                                                            List<int> subBookmakerIds = null,
+                                                            string sourceId = null,
+                                                            SourceType sourceType = SourceType.Customer,
+                                                            string username = null,
                                                             string password = null)
         {
             CheckArguments(outputStream, startDate, endDate, bookmakerId, username, password);
@@ -102,15 +102,15 @@ namespace Sportradar.MTS.SDK.API.Internal
             var result = await GetHistoryCcfChangeAsync(startDate, endDate, bookmakerId, subBookmakerIds, sourceId, sourceType, username, password).ConfigureAwait(false);
             await result.CopyToAsync(outputStream).ConfigureAwait(false);
         }
-        
+
         [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Needs more arguments")]
-        public async Task<List<ICcfChange>> GetHistoryCcfChangeCsvExportAsync(DateTime startDate, 
-                                                                              DateTime endDate, 
+        public async Task<List<ICcfChange>> GetHistoryCcfChangeCsvExportAsync(DateTime startDate,
+                                                                              DateTime endDate,
                                                                               int? bookmakerId = null,
-                                                                              List<int> subBookmakerIds = null, 
-                                                                              string sourceId = null, 
-                                                                              SourceType sourceType = SourceType.Customer, 
-                                                                              string username = null, 
+                                                                              List<int> subBookmakerIds = null,
+                                                                              string sourceId = null,
+                                                                              SourceType sourceType = SourceType.Customer,
+                                                                              string username = null,
                                                                               string password = null)
         {
             CheckArguments(startDate, endDate, bookmakerId, username, password);
@@ -200,12 +200,12 @@ namespace Sportradar.MTS.SDK.API.Internal
 
         [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Needs 8 arguments")]
         private async Task<Stream> GetHistoryCcfChangeAsync(DateTime startDate,
-                                                            DateTime endDate, 
+                                                            DateTime endDate,
                                                             int? bookmakerId = null,
-                                                            IReadOnlyCollection<int> subBookmakerIds = null, 
-                                                            string sourceId = null, 
-                                                            SourceType sourceType = SourceType.Customer, 
-                                                            string username = null, 
+                                                            IReadOnlyCollection<int> subBookmakerIds = null,
+                                                            string sourceId = null,
+                                                            SourceType sourceType = SourceType.Customer,
+                                                            string username = null,
                                                             string password = null)
         {
             _metrics.Measure.Counter.Increment(new CounterOptions { Context = "ReportManager", Name = "GetHistoryCcfChangeAsync", MeasurementUnit = Unit.Calls });
@@ -215,10 +215,10 @@ namespace Sportradar.MTS.SDK.API.Internal
             try
             {
                 var token = await _mtsAuthService.GetTokenAsync(username, password).ConfigureAwait(false);
-                
+
                 fullUri = GenerateFullUri(startDate, endDate, bookmakerId, subBookmakerIds, sourceId, sourceType);
                 var resultStream = await _ccfChangeHistoryFetcher.GetDataAsync(token, fullUri).ConfigureAwait(false);
-                
+
                 return resultStream;
             }
             catch (Exception e)
@@ -229,11 +229,11 @@ namespace Sportradar.MTS.SDK.API.Internal
             }
         }
 
-        private Uri GenerateFullUri(DateTime startDate, 
-                                    DateTime endDate, 
+        private Uri GenerateFullUri(DateTime startDate,
+                                    DateTime endDate,
                                     int? bookmakerId = null,
-                                    IReadOnlyCollection<int> subBookmakerIds = null, 
-                                    string sourceId = null, 
+                                    IReadOnlyCollection<int> subBookmakerIds = null,
+                                    string sourceId = null,
                                     SourceType sourceType = SourceType.Customer)
         {
             bookmakerId ??= _config.BookmakerId;
@@ -247,7 +247,7 @@ namespace Sportradar.MTS.SDK.API.Internal
                 filter += $"&sourceId={sourceId}";
             }
             filter += $"&sourceType={sourceType}";
-            
+
             var fullUri = new Uri(_ccfChangeHistoryUri + filter);
             return fullUri;
         }
