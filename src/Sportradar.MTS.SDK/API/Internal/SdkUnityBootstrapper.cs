@@ -82,7 +82,7 @@ namespace Sportradar.MTS.SDK.API.Internal
             SdkMetricsFactory.SetMetricsFactory(_metricsRoot);
 
             container.RegisterInstance(_metricsRoot, new ContainerControlledLifetimeManager());
-            
+
             RegisterBaseClasses(container, userConfig);
 
             RegisterRabbitMqTypes(container, userConfig, _environment);
@@ -179,13 +179,13 @@ namespace Sportradar.MTS.SDK.API.Internal
             {
                 _environment = "CUSTOM";
             }
-            
+
             var rabbitServer = new RabbitServer(configInternal);
             container.RegisterInstance<IRabbitServer>(rabbitServer);
 
             container.RegisterType<ConnectionValidator, ConnectionValidator>(new ContainerControlledLifetimeManager());
 
-            container.RegisterType<IConnectionFactory, ConfiguredConnectionFactory>(new ContainerControlledLifetimeManager());
+            container.RegisterType<IOwnConnectionFactory, ConfiguredConnectionFactory>(new ContainerControlledLifetimeManager());
 
             container.RegisterType<IChannelFactory, ChannelFactory>(new ContainerControlledLifetimeManager());
 
@@ -229,7 +229,7 @@ namespace Sportradar.MTS.SDK.API.Internal
             container.RegisterInstance("TicketCancelResponseChannelSettings", mtsTicketCancelResponseChannelSettings);
             container.RegisterInstance("TicketCashoutResponseChannelSettings", mtsTicketCashoutResponseChannelSettings);
             container.RegisterInstance("TicketNonSrSettleResponseChannelSettings", mtsTicketNonSrSettleResponseChannelSettings);
-            
+
             var ticketResponseConsumerChannel = new RabbitMqConsumerChannel(container.Resolve<IChannelFactory>(),
                                                                             container.Resolve<IMtsChannelSettings>("TicketResponseChannelSettings"),
                                                                             container.Resolve<IRabbitMqChannelSettings>("TicketChannelSettings"));
@@ -294,7 +294,7 @@ namespace Sportradar.MTS.SDK.API.Internal
         private static void RegisterTicketSenders(IUnityContainer container)
         {
             var ticketCache = new ConcurrentDictionary<string, TicketCacheItem>();
-            
+
             var ticketSender = new TicketSender(new TicketMapper(),
                                                 container.Resolve<IRabbitMqPublisherChannel>("TicketPublisherChannel"),
                                                 ticketCache,
@@ -453,7 +453,7 @@ namespace Sportradar.MTS.SDK.API.Internal
                     new ResolvedParameter<IDataPoster>("MtsAuthService"),
                     new ResolvedParameter<IDeserializer<AccessTokenDTO>>(),
                     new ResolvedParameter<ISingleTypeMapperFactory<AccessTokenDTO, KeycloakAuthorization>>()));
-            
+
             container.RegisterType<IMtsAuthService, MtsAuthService>(
                 new ContainerControlledLifetimeManager(),
                 new InjectionConstructor(

@@ -18,15 +18,19 @@ using System.Diagnostics;
 namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
 {
     /// <summary>
-    /// A <see cref="IConnectionFactory"/> implementations which properly configures it self before first <see cref="IConnection"/> is created
+    /// A <see cref="IOwnConnectionFactory"/> wrapper to configure RabbitMQ's <see cref="ConnectionFactory"/> (sealed class)
     /// </summary>
-    internal class ConfiguredConnectionFactory : ConnectionFactory
+    internal class ConfiguredConnectionFactory: IOwnConnectionFactory
     {
         private static readonly ILogger ExecutionLog = SdkLoggerFactory.GetLogger(typeof(ConfiguredConnectionFactory));
         /// <summary>
         /// A <see cref="IRabbitServer"/> instance containing server information
         /// </summary>
         private readonly IRabbitServer _server;
+        /// <summary>
+        /// Actual RabbitMQ <see cref="ConnectionFactory"/>
+        /// </summary>
+        private readonly ConnectionFactory _connectionFactory;
         private static volatile int termninationCount = 0;
 
         /// <summary>
@@ -44,6 +48,7 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
             Guard.Argument(server, nameof(server)).NotNull();
 
             _server = server;
+            _connectionFactory = new ConnectionFactory();
         }
 
 
@@ -53,32 +58,32 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Vulnerability", "S4423:Weak SSL/TLS protocols should not be used", Justification = "Need to support older for some clients")]
         private void Configure()
         {
-            HostName = _server.HostAddress;
-            Port = _server.Port;
-            UserName = _server.Username;
-            Password = _server.Password;
-            VirtualHost = _server.VirtualHost;
-            AutomaticRecoveryEnabled = _server.AutomaticRecovery;
+            _connectionFactory.HostName = _server.HostAddress;
+            _connectionFactory.Port = _server.Port;
+            _connectionFactory.UserName = _server.Username;
+            _connectionFactory.Password = _server.Password;
+            _connectionFactory.VirtualHost = _server.VirtualHost;
+            _connectionFactory.AutomaticRecoveryEnabled = _server.AutomaticRecovery;
 
-            Ssl.Enabled = _server.UseSsl;
-            Ssl.Version = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+            _connectionFactory.Ssl.Enabled = _server.UseSsl;
+            _connectionFactory.Ssl.Version = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             if (_server.UseSsl && ShouldUseCertificateValidation(_server.SslServerName))
             {
-                Ssl.ServerName = _server.SslServerName;
+                _connectionFactory.Ssl.ServerName = _server.SslServerName;
             }
             else if (_server.UseSsl)
             {
-                Ssl.AcceptablePolicyErrors = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch | SslPolicyErrors.RemoteCertificateNotAvailable;
+                _connectionFactory.Ssl.AcceptablePolicyErrors = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch | SslPolicyErrors.RemoteCertificateNotAvailable;
             }
 
             if (_server.ClientProperties != null && _server.ClientProperties.Any())
             {
-                ClientProperties = _server.ClientProperties as Dictionary<string, object>;
+                _connectionFactory.ClientProperties = _server.ClientProperties as Dictionary<string, object>;
             }
 
             if (_server.HeartBeat >= 10)
             {
-                RequestedHeartbeat = _server.HeartBeat;
+                _connectionFactory.RequestedHeartbeat = TimeSpan.FromSeconds(_server.HeartBeat);
             }
         }
 
@@ -86,7 +91,7 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
         /// Create a connection to the specified endpoint.
         /// </summary>
         /// <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException">When the configured host name was not reachable</exception>
-        public override IConnection CreateConnection()
+        public IConnection CreateConnection()
         {
             IConnection connection = null;
             try
@@ -126,7 +131,7 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
                 {
                     Configure();
                 }
-                return base.CreateConnection(GenerateConnectionName());
+                return _connectionFactory.CreateConnection(GenerateConnectionName());
             }
             catch (Exception ex)
             {
@@ -142,7 +147,7 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
             Thread createConnectionThread = new Thread(() => {
                 connection = CreateConnectionThread();
             });
-            
+
             bool finished = false;
             try
             {
@@ -170,6 +175,5 @@ namespace Sportradar.MTS.SDK.API.Internal.RabbitMq
             var systemStartTime = DateTime.Now.AddMilliseconds(-Environment.TickCount);
             return $"MTS|NETStd|{SdkInfo.GetVersion()}|{DateTime.Now:yyyyMMddHHmm}|{TicketHelper.DateTimeToUnixTime(systemStartTime)}|{Process.GetCurrentProcess().Id}";
         }
-
     }
 }
