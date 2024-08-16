@@ -1,0 +1,33 @@
+name: CI-nuget-publish
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  NUPKG: Sportradar.MTS.SDK/publish
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore src/Sportradar.MTS.SDK/Sportradar.MTS.SDK.csproj
+    - name: Build
+      run: dotnet build src/Sportradar.MTS.SDK/Sportradar.MTS.SDK.csproj -c Release --no-restore
+    - name: Publish
+      run: dotnet publish src/Sportradar.MTS.SDK/Sportradar.MTS.SDK.csproj -c Release -o src/Sportradar.MTS.SDK/publish --no-restore
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: NuGet packages
+        path: ${NUPKG}/*.nupkg
+    - name: Push to NuGet
+      run: dotnet nuget push ${NUPKG}/*.nupkg --source ${{ secrets.NUGET_SERVER }} --api-key ${{ secrets.NUGET_KEY }}
